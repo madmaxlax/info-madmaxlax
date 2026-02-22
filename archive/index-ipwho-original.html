@@ -1,10 +1,13 @@
 <!DOCTYPE html>
+<!-- saved from url=(0026)http://info.madmaxlax.com/ -->
 <html lang="en">
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>User Info | Mad Max Lax</title>
+
     <link rel="shortcut icon" href="favicon.ico" />
 </head>
 
@@ -132,8 +135,9 @@
         document.getElementById("UserAgent").innerHTML = navigator.userAgent;
 
         var xmlhttpIPAddr = new XMLHttpRequest();
-        // Switched from ipwho.is to ip-api.com due to CORS restrictions on ipwho.is free tier
-        var url = "//ip-api.com/json/";
+        //free geoIP address lookup REST API
+        // var url = "http://api.ipstack.com/?access_key=c3ee03f48eee09e3dbc269330eab1aee&format=1";
+        var url = "//ipwho.is/";
         var locObj;
         var loaded = false;
         var currentTime = new Date();
@@ -172,45 +176,41 @@
                 var time;
                 var ispOrg;
 
-                // ip-api.com uses 'query' instead of 'ip'
-                ipAddress = locObj.query;
+                ipAddress = locObj.ip;
                 checkVPN(ipAddress);
 
-                // ip-api.com field mappings
                 if (locObj["city"] == "") city = "(no city estimate)";
                 else city = locObj["city"];
 
-                // ip-api.com uses 'regionName' instead of 'region'
-                if (locObj["regionName"] == "") state = "(no region estimate)";
-                else state = locObj["regionName"];
+                if (locObj["region"] == "") state = "(no region estimate)";
+                else state = locObj["region"];
 
-                // ip-api.com uses 'country' not 'country_code'
                 if (locObj["country"] == "") country = "(no country estimate)";
                 else country = locObj["country"];
 
-                // ip-api.com uses 'countryCode' for the code
-                countryEmoji = locObj["countryCode"]
+                countryEmoji = locObj["country_code"]
                     .toUpperCase()
                     .replace(/./g, (char) =>
                         String.fromCodePoint(char.charCodeAt(0) + 127397)
                     );
 
-                // ip-api.com uses 'timezone' field directly (string format)
                 if (locObj["timezone"] == "") time = "(no timezone estimate)";
                 else {
                     time = locObj["timezone"];
-                    // ip-api.com doesn't provide current_time, so we use local time
-                    currentTime = new Date();
-                    updateTimeZoneValues(currentTime);
+                    currentTime = new Date(time.current_time);
+                    updateTimeZoneValues(currentTime)
                 }
 
-                // ip-api.com provides 'isp' and 'org' as separate fields
-                ispOrg = locObj.isp + (locObj.isp !== locObj.org ? "-" + locObj.org : "");
+                ispOrg =
+                    locObj.connection.isp +
+                    (locObj.connection.isp !== locObj.connection.org
+                        ? "-" + locObj.connection.org
+                        : "");
 
-                //update the html
+                //upadte the html
                 document.getElementById("IPAddr").innerHTML = ipAddress;
 
-                document.getElementById("YourTime").innerHTML = currentTime.toLocaleTimeString();
+                document.getElementById("YourTime").innerHTML = new Date(time.current_time).toLocaleTimeString();
                 document.getElementById("iploc").innerHTML =
                     city +
                     ", " +
@@ -220,7 +220,7 @@
                     " " +
                     countryEmoji +
                     "<br/> timezone: " +
-                    time +
+                    time.id +
                     ". <br/>ISP: " +
                     ispOrg;
                 loaded = true;
